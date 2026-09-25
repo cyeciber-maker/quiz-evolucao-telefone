@@ -99,6 +99,17 @@
       border-radius: 20px;
       box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
     }
+
+    /* Remove marcas do Netlify */
+    [data-netlify-identity-button],
+    [data-netlify-cms],
+    .netlify-cms-logo,
+    .netlify-badge,
+    a[href*="netlify.com"],
+    [class*="netlify"],
+    [id*="netlify"] {
+      display: none !important;
+    }
   </style>
 </head>
 <body>
@@ -298,7 +309,14 @@
       loadQuestion();
     }
 
-    window.onload = () => document.getElementById('inicio').classList.add('active');
+    // Remove elementos do Netlify via JavaScript
+    window.addEventListener('load', () => {
+      document.getElementById('inicio').classList.add('active');
+      
+      // Remove badges e elementos do Netlify
+      const netlifyElements = document.querySelectorAll('[data-netlify-identity-button], [data-netlify-cms], .netlify-cms-logo, .netlify-badge, a[href*="netlify.com"]');
+      netlifyElements.forEach(el => el.remove());
+    });
   </script>
 </body>
 </html>
