@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Quiz: A Evolução do Telefone ao Smartphone</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@600&display=swap');
+
+    :root {
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --primary: #2563eb;
+      --green: #10b981;
+      --red: #ef4444;
+    }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: #1e2937;
+      line-height: 1.5;
+      touch-action: manipulation;
+    }
+
+    .screen {
+      min-height: 100dvh;
+      padding: 16px;
+      display: none;
+      flex-direction: column;
+    }
+    .screen.active { display: flex; }
+
+    h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 28px;
+      text-align: center;
+      margin-bottom: 20px;
+      color: var(--primary);
+    }
+
+    /* Card */
+    .option {
+      background: var(--card);
+      border: 3px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 20px 24px;
+      margin-bottom: 14px;
+      font-size: 18px;
+      font-weight: 600;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+    .option:hover {
+      border-color: var(--primary);
+      transform: translateY(-4px);
+      box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    }
+    .option.selected { border-color: var(--primary); background: #eff6ff; }
+    .option.correct { border-color: var(--green); background: #f0fdf4; }
+    .option.wrong { border-color: var(--red); background: #fef2f2; }
+
+    button {
+      width: 100%;
+      padding: 18px;
+      font-size: 18px;
+      font-weight: 600;
+      border: none;
+      border-radius: 16px;
+      margin-top: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    #nextBtn {
+      background: var(--primary);
+      color: white;
+    }
+    #nextBtn:disabled { background: #cbd5e1; }
+
+    .feedback {
+      margin: 16px 0;
+      padding: 14px;
+      border-radius: 12px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 18px;
+      transition: all 0.3s;
+    }
+    .feedback.correto { background: #f0fdf4; color: #15803d; }
+    .feedback.errado { background: #fee2e2; color: #b91c1c; }
+
+    .result {
+      text-align: center;
+      padding: 20px;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TELA INICIAL -->
+  <div id="inicio" class="screen active">
+    <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; padding: 0 16px;">
+      <h1 style="font-size:32px;">Evolução do Telefone</h1>
+      <p style="text-align:center; font-size:20px; max-width:320px; margin:20px 0; color:#475569;">
+        8 perguntas • Toque para responder e veja seu resultado
+      </p>
+      <button onclick="startQuiz()" style="background:var(--green); color:white; font-size:22px;">COMEÇAR QUIZ</button>
+    </div>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="quiz" class="screen">
+    <div style="text-align:center; margin-bottom:16px;">
+      <span id="progress" style="font-weight:600; font-size:18px; color:var(--primary);">1/8</span>
+    </div>
+    
+    <h1 id="question" style="font-size:24px; margin-bottom:20px;"></h1>
+    <div id="options"></div>
+    <button id="nextBtn" onclick="nextQuestion()" disabled>Próxima</button>
+    <div id="feedback" class="feedback" style="display:none;"></div>
+  </div>
+
+  <!-- RESULTADO -->
+  <div id="result" class="screen">
+    <div class="result">
+      <h1 style="font-size:32px; margin-bottom:12px;">Resultado!</h1>
+      <p id="scoreText" style="font-size:22px; margin:16px 0; line-height:1.6;"></p>
+      <button onclick="tryAgain()" style="background:var(--green); color:white; font-size:20px;">Tentar novamente</button>
+    </div>
+  </div>
+
+  <script>
+    let currentQuestion = 0;
+    let selectedAnswer = null;
+    let userAnswers = [];
+    
+    const questions = [
+      { 
+        q: "Se você ficasse 24 horas sem celular, o que seria mais difícil para você?", 
+        options: ["Ficar sem acesso às redes sociais e mensagens.", "Ficar sem televisão.", "Ficar sem comer.", "Ficar sem dormir."], 
+        personal: true 
+      },
+      { 
+        q: "Qual foi a função inicial do telefone?", 
+        options: ["Tirar fotos.", "Permitir a comunicação por voz à distância.", "Acessar redes sociais.", "Assistir a vídeos."], 
+        correct: "Permitir a comunicação por voz à distância." 
+      },
+      { 
+        q: "Quem ficou conhecido pela invenção do telefone?", 
+        options: ["Thomas Edison.", "Isaac Newton.", "Alexander Graham Bell.", "Albert Einstein."], 
+        correct: "Alexander Graham Bell." 
+      },
+      { 
+        q: "Quando surgiu o telefone?", 
+        options: ["Em 1492.", "Em 1776.", "Em 1876.", "Em 1950."], 
+        correct: "Em 1876." 
+      },
+      { 
+        q: "Qual foi a principal mudança trazida pelo celular?", 
+        options: ["Permitiu a comunicação móvel, sem depender de um telefone fixo.", "Acabou com a necessidade de internet.", "Substituiu completamente os computadores.", "Serviu apenas para fazer chamadas."], 
+        correct: "Permitiu a comunicação móvel, sem depender de um telefone fixo." 
+      },
+      { 
+        q: "O que diferencia um celular comum de um smartphone?", 
+        options: ["O smartphone possui recursos mais avançados e permite usar aplicativos e internet.", "O celular comum sempre possui mais funções.", "O smartphone só pode fazer ligações.", "Não existe nenhuma diferença entre eles."], 
+        correct: "O smartphone possui recursos mais avançados e permite usar aplicativos e internet." 
+      },
+      { 
+        q: "Quais são os principais benefícios do smartphone?", 
+        options: ["Apenas fazer ligações.", "Comunicação, acesso à informação, aplicativos, estudos e entretenimento.", "Somente tirar fotografias.", "Apenas jogar."], 
+        correct: "Comunicação, acesso à informação, aplicativos, estudos e entretenimento." 
+      },
+      { 
+        q: "Quais problemas podem surgir com o uso excessivo do celular?", 
+        options: ["Melhora garantida do sono e da concentração.", "Apenas aumento da memória.", "Problemas de sono, dificuldade de concentração e menor interação social.", "Nenhum problema."], 
+        correct: "Problemas de sono, dificuldade de concentração e menor interação social." 
+      }
+    ];
+
+    function shuffle(array) {
+      return array.sort(() => Math.random() - 0.5);
+    }
+
+    function loadQuestion() {
+      const q = questions[currentQuestion];
+      document.getElementById('question').textContent = q.q;
+      document.getElementById('progress').textContent = `${currentQuestion + 1}/8`;
+      
+      const opts = document.getElementById('options');
+      opts.innerHTML = '';
+      
+      shuffle(q.options).forEach(opt => {
+        const div = document.createElement('div');
+        div.className = 'option';
+        div.textContent = opt;
+        div.onclick = () => selectOption(div, opt);
+        opts.appendChild(div);
+      });
+      
+      document.getElementById('nextBtn').disabled = true;
+      document.getElementById('feedback').style.display = 'none';
+      selectedAnswer = null;
+    }
+
+    function selectOption(el, chosen) {
+      document.querySelectorAll('.option').forEach(o => {
+        o.classList.remove('selected', 'correct', 'wrong');
+        o.style.pointerEvents = 'none';
+      });
+      el.classList.add('selected');
+      selectedAnswer = chosen;
+      document.getElementById('nextBtn').disabled = false;
+    }
+
+    function nextQuestion() {
+      const q = questions[currentQuestion];
+      const feedback = document.getElementById('feedback');
+      
+      if (q.personal) {
+        userAnswers.push({q: q.q, r: "Resposta pessoal"});
+        feedback.textContent = "Resposta registrada com sucesso! Obrigado pela sua opinião.";
+        feedback.className = "feedback.correto";
+      } else {
+        if (selectedAnswer === q.correct) {
+          feedback.textContent = "✔ Você acertou!";
+          feedback.className = "feedback.correto";
+          userAnswers.push({q: q.q, r: "Certo"});
+        } else {
+          feedback.textContent = "✘ Errado! A resposta correta era: " + q.correct;
+          feedback.className = "feedback.errado";
+          userAnswers.push({q: q.q, r: "Errado"});
+        }
+      }
+      
+      feedback.style.display = 'block';
+      
+      // Destaque visual exato
+      document.querySelectorAll('.option').forEach(o => {
+        const text = o.textContent.trim();
+        if (text === selectedAnswer) {
+          if (selectedAnswer === q.correct) {
+            o.classList.add('correct');
+          } else {
+            o.classList.add('wrong');
+          }
+        } else if (text === q.correct) {
+          o.classList.add('correct');
+        }
+      });
+      
+      document.getElementById('nextBtn').textContent = "Próxima";
+      
+      currentQuestion++;
+      if (currentQuestion < questions.length) {
+        setTimeout(() => loadQuestion(), 1200);
+      } else {
+        showResult();
+      }
+    }
+
+    function showResult() {
+      const total = userAnswers.length;
+      const correct = userAnswers.filter(a => a.r === "Certo").length;
+      const personalCount = userAnswers.filter(a => a.r === "Resposta pessoal").length;
+      const percent = Math.round((correct / total) * 100);
+      
+      let msg = `Você respondeu ${total} perguntas.<br>`;
+      msg += `Acertos: ${correct}<br>`;
+      msg += `Respostas pessoais: ${personalCount}<br>`;
+      msg += `<span style="font-size:28px; font-weight:700; color:#15803d;">${percent}%</span> de acerto`;
+      
+      if (percent >= 80) msg += " 🏆 Excelente!";
+      else if (percent >= 60) msg += " Bom!";
+      else msg += " Continue praticando!";
+      
+      document.getElementById('scoreText').innerHTML = msg;
+      document.getElementById('result').classList.add('active');
+      document.getElementById('quiz').classList.remove('active');
+    }
+
+    function tryAgain() {
+      currentQuestion = 0;
+      userAnswers = [];
+      document.getElementById('result').classList.remove('active');
+      document.getElementById('quiz').classList.add('active');
+      loadQuestion();
+    }
+
+    function startQuiz() {
+      document.getElementById('inicio').classList.remove('active');
+      document.getElementById('quiz').classList.add('active');
+      loadQuestion();
+    }
+
+    window.onload = () => document.getElementById('inicio').classList.add('active');
+  </script>
+</body>
+</html>
